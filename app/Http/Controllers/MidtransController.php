@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Request;
+use Illuminate\Http\Request;
 use \Midtrans\ApiRequestor;
 use \Midtrans\Config;
 use \Midtrans\CoreApi;
@@ -31,38 +31,24 @@ class MidtransController extends Controller
       }
     }
 
-    public function getSnapToken() {
-        $item_list = array();
-        $amount = 0;
+    public function getSnapToken(Request $req) {
         Config::$serverKey = 'SB-Mid-server-XrY8eztBflKtDnaMQZcLAxNi';
         if (!isset(Config::$serverKey)) {
             return "Please set your payment server key";
         }
-
-        // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
         Config::$isProduction = false;
-
         Config::$isSanitized = true;
 
         // Enable 3D-Secure
         Config::$is3ds = true;
 
         // Required
-        $item_list[] = [
-                'id' => "1",
-                'price' => 20000,
-                'quantity' => 1,
-                'name' => "Dino"
-        ];
 
-        $transaction_details = array(
-            'order_id' => rand(),
-            'gross_amount' => 20000, // no decimal allowed for creditcard
-        );
+        $transaction_details = $req->transaction_details;
 
         // Optional
-        $item_details = $item_list;
-
+        $item_details = $req->item_details;
+        
         // Optional
         $billing_address = array(
             'first_name'    => "Dino",
@@ -87,36 +73,30 @@ class MidtransController extends Controller
 
         // Optional
         $customer_details = array(
-            'first_name'    => "Arif",
-            'last_name'     => "Rahman",
-            'email'         => "arif@rahman.com",
+            'first_name'    => "Fahmi",
+            'last_name'     => "Alfareza",
+            'email'         => "fahmialfareza97@gmail.com",
             'phone'         => "081122334451",
             'billing_address'  => $billing_address,
             'shipping_address' => $shipping_address
         );
 
         // Optional, remove this to display all available payment methods
-        $enable_payments = array();
+        // $enable_payments = array();
 
         // Fill transaction details
         $transaction = array(
-            'enabled_payments' => $enable_payments,
+            // 'enabled_payments' => $enable_payments,
             'transaction_details' => $transaction_details,
             'customer_details' => $customer_details,
             'item_details' => $item_details,
         );
         // return $transaction;
         try {
-            $snapToken = Snap::getSnapToken($transaction);
-            $paymentUrl = Snap::createTransaction($transaction)->redirect_url;
-            $result = [
-                'token' => $snapToken,
-                'redirect_url' => $paymentUrl
-            ];
-            // dd($result);
+            $token = Snap::getSnapToken($transaction);
 
-            return response()->json($result);
-            // return ['code' => 1 , 'message' => 'success' , 'result' => $snapToken];
+            // return response()->json($result);
+            return ['code' => 1 , 'message' => 'success' , 'token' => $token];
         } catch (\Exception $e) {
             dd($e);
             return ['code' => 0 , 'message' => 'failed'];
